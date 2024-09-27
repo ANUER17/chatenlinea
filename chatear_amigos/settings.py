@@ -66,13 +66,13 @@ ASGI_APPLICATION = 'chatear_amigos.asgi.application'
 # Hacer que Redis sea opcional, con un chequeo antes de su configuración
 if os.getenv('REDIS_URL'):
     CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                'hosts': [os.getenv('REDIS_URL')],
-            },
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [os.getenv('REDIS_URL', 'redis://localhost:6379')],
         },
-    }
+    },
+}
 else:
     print("Redis no está configurado. Funcionando sin WebSockets.")
 
