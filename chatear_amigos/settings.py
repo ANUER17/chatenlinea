@@ -5,10 +5,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'tu-secreta-key-para-django'
 
-DEBUG = True
+DEBUG = False  # Cambia a False en producción
 
 # Actualizado con el nombre de tu dominio en Render
 ALLOWED_HOSTS = ['chatenlinea-8omv.onrender.com', 'localhost', '127.0.0.1']
+
+# Agregar el dominio a CSRF_TRUSTED_ORIGINS
+CSRF_TRUSTED_ORIGINS = ['https://chatenlinea-8omv.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
