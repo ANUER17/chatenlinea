@@ -8,7 +8,7 @@ SECRET_KEY = 'tu-secreta-key-para-django'
 DEBUG = True
 
 # Actualizado con el nombre de tu dominio en Render
-ALLOWED_HOSTS = ['your-app-name.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['chatenlinea-8omv.onrender.com', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
