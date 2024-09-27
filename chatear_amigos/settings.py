@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -6,8 +7,8 @@ SECRET_KEY = 'tu-secreta-key-para-django'
 
 DEBUG = True
 
-# Agrega aquí el dominio o URL de tu despliegue en Render
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.onrender.com']
+# Actualizado con el nombre de tu dominio en Render
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'your-app-name.onrender.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -63,7 +64,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')],
+            'hosts': [os.getenv('REDIS_URL', 'redis://red-crr4ek2j1k6c73e98ing:6379')],  # URL de Redis en Render
         },
     },
 }
