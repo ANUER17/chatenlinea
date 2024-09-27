@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en Tiempo Real</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat-log { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+        #chat-message-input { width: 80%; padding: 10px; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .friend-list, .request-list, .user-list { margin-bottom: 20px; }
+        .friend-list ul, .request-list ul, .user-list ul { list-style-type: none; padding: 0; }
+        .friend-list li, .request-list li, .user-list li { margin: 5px 0; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
+        .unread-message { font-weight: bold; color: red; }
+    </style>
+</head>
+<body>
+    <h2>Chatea con tus amigos</h2>
+
+    <!-- Botón de cerrar sesión -->
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Cerrar Sesión</button>
+    </form>
+
+    <!-- Lista de amigos -->
+    <div class="friend-list">
+        <h3>Tus amigos</h3>
+        <ul>
+            {% if friends %}
+                {% for friend in friends %}
+                    <li>
+                        {{ friend.username }}
+                        <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
+                        {% for message in unread_messages %}
+                            {% if message.sender == friend %}
+                                <span class="unread-message">¡Nuevo mensaje!</span>
+                            {% endif %}
+                        {% endfor %}
+                        <a href="{% url 'chat_friend' friend.id %}">Chatear</a>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li>No tienes amigos agregados aún.</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Solicitudes de amistad pendientes -->
+    <div class="request-list">
+        <h3>Solicitudes de amistad pendientes</h3>
+        <ul>
+            {% if pending_requests %}
+                {% for request in pending_requests %}
+                    <li>
+                        {{ request.sender.username }} te ha enviado una solicitud de amistad.
+                        <form method="post" action="{% url 'accept_friend' request.id %}">
+                            {% csrf_token %}
+                            <button type="submit">Aceptar</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li>No tienes solicitudes pendientes.</li>
+            {% endif %}
+        </ul>
+    </div>
+
+    <!-- Enviar solicitudes de amistad -->
+    <div class="user-list">
+        <h3>Enviar solicitud de amistad</h3>
+        <ul>
+            {% if users %}
+                {% for user in users %}
+                    <li>
+                        {{ user.username }}
+                        <form method="post" action="{% url 'send_friend_request' user.id %}">
+                            {% csrf_token %}
+                            <button type="submit">Enviar solicitud</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li>No hay más usuarios disponibles para enviar solicitudes.</li>
+            {% endif %}
+        </ul>
+    </div>
+</body>
+</html>

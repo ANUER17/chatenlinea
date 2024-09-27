@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatear con {{ friend.username }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #chat-log { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+        #chat-message-input { width: 80%; padding: 10px; }
+        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h2>Chateando con {{ friend.username }}</h2>
+
+    <!-- Botón para volver a la lista de amigos -->
+    <a href="{% url 'chat_home' %}">Volver a la lista de amigos</a>
+
+    <!-- Área del chat -->
+    <div id="chat-log"></div>
+    <input id="chat-message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off">
+    <button id="chat-message-submit">Enviar</button>
+
+    <script>
+        const roomName = "{{ friend.username }}";  // Sala de chat personalizada por nombre de amigo
+        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+
+        // Recepción de mensajes desde el WebSocket
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const chatLog = document.querySelector('#chat-log');
+            chatLog.innerHTML += `<p><strong>${data.sender}:</strong> ${data.message}</p>`;
+            chatLog.scrollTop = chatLog.scrollHeight;  // Desplazarse automáticamente al final
+        };
+
+        // Gestión de desconexiones inesperadas
+        chatSocket.onclose = function(e) {
+            console.error('Chat cerrado inesperadamente');
+        };
+
+        // Enfocar el campo de entrada al cargar la página
+        document.querySelector('#chat-message-input').focus();
+
+        // Enviar mensaje con Enter
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.keyCode === 13) {
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        // Función de envío de mensajes
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+
+            if (message.trim()) {
+                chatSocket.send(JSON.stringify({
+                    'message': message,
+                    'sender': "{{ request.user.username }}"  // Enviar el nombre del remitente
+                }));
+                messageInputDom.value = '';  // Limpiar el campo de entrada después de enviar
+            }
+        };
+    </script>
+</body>
+</html>
