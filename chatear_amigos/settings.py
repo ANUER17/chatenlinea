@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'tu-secreta-key-para-django'
 
-DEBUG = False
+DEBUG = True
 
 # Actualizado con el nombre de tu dominio en Render
 ALLOWED_HOSTS = ['your-app-name.onrender.com', 'localhost', '127.0.0.1']
