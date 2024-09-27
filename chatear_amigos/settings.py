@@ -60,14 +60,18 @@ DATABASES = {
 
 ASGI_APPLICATION = 'chatear_amigos.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.getenv('REDIS_URL', 'redis://red-crr4ek2j1k6c73e98ing:6379')],  # URL de Redis en Render
+# Hacer que Redis sea opcional, con un chequeo antes de su configuración
+if os.getenv('REDIS_URL'):
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [os.getenv('REDIS_URL')],
+            },
         },
-    },
-}
+    }
+else:
+    print("Redis no está configurado. Funcionando sin WebSockets.")
 
 STATIC_URL = '/static/'
 
