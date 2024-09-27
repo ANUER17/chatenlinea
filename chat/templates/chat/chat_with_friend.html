@@ -25,7 +25,8 @@
 
     <script>
         const roomName = "{{ friend.username }}";  // Sala de chat personalizada por nombre de amigo
-        const chatSocket = new WebSocket(`ws://${window.location.host}/ws/chat/${roomName}/`);
+        const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';  // Determina si usar ws o wss
+        const chatSocket = new WebSocket(`${protocol}${window.location.host}/ws/chat/${roomName}/`);
 
         // Recepción de mensajes desde el WebSocket
         chatSocket.onmessage = function(e) {
