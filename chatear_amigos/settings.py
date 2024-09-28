@@ -69,7 +69,8 @@ if os.getenv('REDIS_URL'):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [os.getenv('REDIS_URL')],
+                'hosts': [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+                'symmetric_encryption_keys': [SECRET_KEY],  # Agrega una clave de cifrado si es necesario
             },
         },
     }
