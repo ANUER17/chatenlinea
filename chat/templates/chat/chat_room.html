@@ -5,87 +5,196 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat en Tiempo Real</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        #chat-log { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
-        #chat-message-input { width: 80%; padding: 10px; }
-        button { padding: 10px 20px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #45a049; }
-        .friend-list, .request-list, .user-list { margin-bottom: 20px; }
-        .friend-list ul, .request-list ul, .user-list ul { list-style-type: none; padding: 0; }
-        .friend-list li, .request-list li, .user-list li { margin: 5px 0; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; }
-        .unread-message { font-weight: bold; color: red; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .left-panel {
+            width: 30%;
+            border-right: 1px solid #ccc;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f1f1f1;
+        }
+
+        .right-panel {
+            width: 70%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #chat-log {
+            flex-grow: 1;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        #chat-message-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .friend-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .friend-list li {
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        .friend-list li:hover {
+            background-color: #e6e6e6;
+        }
+
+        .unread-message {
+            font-weight: bold;
+            color: red;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .request-list, .user-list {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h2>Chatea con tus amigos</h2>
 
-    <!-- Botón de cerrar sesión -->
-    <form action="{% url 'logout' %}" method="post">
-        {% csrf_token %}
-        <button type="submit">Cerrar Sesión</button>
-    </form>
+    <div class="chat-container">
 
-    <!-- Lista de amigos -->
-    <div class="friend-list">
-        <h3>Tus amigos</h3>
-        <ul>
-            {% if friends %}
-                {% for friend in friends %}
-                    <li>
-                        {{ friend.username }}
-                        <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
-                        {% for message in unread_messages %}
-                            {% if message.sender == friend %}
-                                <span class="unread-message">¡Nuevo mensaje!</span>
-                            {% endif %}
+        <!-- Panel Izquierdo (Lista de amigos) -->
+        <div class="left-panel">
+            <h3>Tus amigos</h3>
+            <ul>
+                {% if friends %}
+                    {% for friend in friends %}
+                        <li onclick="openChat('{{ friend.username }}')">
+                            {{ friend.username }}
+                            <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
+                            {% for message in unread_messages %}
+                                {% if message.sender == friend %}
+                                    <span class="unread-message">¡Nuevo mensaje!</span>
+                                {% endif %}
+                            {% endfor %}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li>No tienes amigos agregados aún.</li>
+                {% endif %}
+            </ul>
+
+            <div class="request-list">
+                <h4>Solicitudes de Amistad</h4>
+                <ul>
+                    {% if pending_requests %}
+                        {% for request in pending_requests %}
+                            <li>
+                                {{ request.sender.username }} te ha enviado una solicitud.
+                                <form method="post" action="{% url 'accept_friend' request.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Aceptar</button>
+                                </form>
+                            </li>
                         {% endfor %}
-                        <a href="{% url 'chat_friend' friend.id %}">Chatear</a>
-                    </li>
-                {% endfor %}
-            {% else %}
-                <li>No tienes amigos agregados aún.</li>
-            {% endif %}
-        </ul>
+                    {% else %}
+                        <li>No tienes solicitudes pendientes.</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <div class="user-list">
+                <h4>Enviar solicitud de amistad</h4>
+                <ul>
+                    {% if users %}
+                        {% for user in users %}
+                            <li>
+                                {{ user.username }}
+                                <form method="post" action="{% url 'send_friend_request' user.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Enviar solicitud</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No hay más usuarios disponibles.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Panel Derecho (Chat con el amigo seleccionado) -->
+        <div class="right-panel">
+            <div id="chat-log">
+                <h3>Selecciona un amigo para chatear</h3>
+            </div>
+
+            <input id="chat-message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off" disabled>
+            <button id="chat-message-submit" disabled>Enviar</button>
+        </div>
     </div>
 
-    <!-- Solicitudes de amistad pendientes -->
-    <div class="request-list">
-        <h3>Solicitudes de amistad pendientes</h3>
-        <ul>
-            {% if pending_requests %}
-                {% for request in pending_requests %}
-                    <li>
-                        {{ request.sender.username }} te ha enviado una solicitud de amistad.
-                        <form method="post" action="{% url 'accept_friend' request.id %}">
-                            {% csrf_token %}
-                            <button type="submit">Aceptar</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            {% else %}
-                <li>No tienes solicitudes pendientes.</li>
-            {% endif %}
-        </ul>
-    </div>
+    <script>
+        function openChat(friendUsername) {
+            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const chatSocket = new WebSocket(`${protocol}${window.location.host}/ws/chat/${friendUsername}/`);
 
-    <!-- Enviar solicitudes de amistad -->
-    <div class="user-list">
-        <h3>Enviar solicitud de amistad</h3>
-        <ul>
-            {% if users %}
-                {% for user in users %}
-                    <li>
-                        {{ user.username }}
-                        <form method="post" action="{% url 'send_friend_request' user.id %}">
-                            {% csrf_token %}
-                            <button type="submit">Enviar solicitud</button>
-                        </form>
-                    </li>
-                {% endfor %}
-            {% else %}
-                <li>No hay más usuarios disponibles para enviar solicitudes.</li>
-            {% endif %}
-        </ul>
-    </div>
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                const chatLog = document.querySelector('#chat-log');
+                chatLog.innerHTML += `<p><strong>${data.sender}:</strong> ${data.message}</p>`;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            };
+
+            chatSocket.onclose = function(e) {
+                console.error('Chat cerrado inesperadamente');
+            };
+
+            const input = document.querySelector('#chat-message-input');
+            const submitButton = document.querySelector('#chat-message-submit');
+
+            input.disabled = false;
+            submitButton.disabled = false;
+
+            document.querySelector('#chat-message-submit').onclick = function(e) {
+                const message = input.value;
+                if (message.trim()) {
+                    chatSocket.send(JSON.stringify({
+                        'message': message,
+                        'sender': "{{ request.user.username }}"
+                    }));
+                    input.value = '';
+                }
+            };
+        }
+    </script>
 </body>
 </html>
