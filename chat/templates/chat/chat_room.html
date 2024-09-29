@@ -75,6 +75,7 @@
             background-color: #4CAF50;
             color: white;
             border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
 
@@ -89,13 +90,21 @@
 </head>
 <body>
 
+    <!-- Botón de cerrar sesión en la parte superior -->
+    <div style="position: absolute; top: 10px; right: 20px;">
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Cerrar Sesión</button>
+        </form>
+    </div>
+
     <div class="chat-container">
 
         <!-- Panel Izquierdo (Lista de amigos) -->
         <div class="left-panel">
             <h3>Tus amigos</h3>
-            <ul>
-                {% if friends %}
+            {% if friends %}
+                <ul>
                     {% for friend in friends %}
                         <li onclick="openChat('{{ friend.username }}')">
                             {{ friend.username }}
@@ -107,10 +116,10 @@
                             {% endfor %}
                         </li>
                     {% endfor %}
-                {% else %}
-                    <li>No tienes amigos agregados aún.</li>
-                {% endif %}
-            </ul>
+                </ul>
+            {% else %}
+                <p>Selecciona un amigo para chatear</p>
+            {% endif %}
 
             <div class="request-list">
                 <h4>Solicitudes de Amistad</h4>
@@ -154,7 +163,7 @@
         <!-- Panel Derecho (Chat con el amigo seleccionado) -->
         <div class="right-panel">
             <div id="chat-log">
-                <h3>Selecciona un amigo para chatear</h3>
+                <h3>Elige un amigo para comenzar a chatear</h3>
             </div>
 
             <input id="chat-message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off" disabled>
@@ -181,6 +190,7 @@
             const input = document.querySelector('#chat-message-input');
             const submitButton = document.querySelector('#chat-message-submit');
 
+            // Habilitar el input y botón de enviar al seleccionar un amigo
             input.disabled = false;
             submitButton.disabled = false;
 
