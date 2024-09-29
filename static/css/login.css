@@ -1,5 +1,7 @@
 /* login.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Lobster&display=swap');
+
 body {
     font-family: Arial, sans-serif;
     background-color: #fafafa;
@@ -20,8 +22,8 @@ body {
 }
 
 .login-container h2 {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 36px;
+    font-family: 'Lobster', cursive;
+    font-size: 48px;
     margin-bottom: 20px;
     color: #333;
     font-weight: 600;
