@@ -68,6 +68,14 @@
             background-color: #e6e6e6;
         }
 
+        .friend-list li.online {
+            background-color: #d4edda; /* Verde suave para amigos en línea */
+        }
+
+        .friend-list li.offline {
+            background-color: #f8d7da; /* Rojo suave para amigos desconectados */
+        }
+
         .friend-list li.selected {
             background-color: #4CAF50;
             color: white;
@@ -77,16 +85,6 @@
         .unread-message {
             font-weight: bold;
             color: red;
-        }
-
-        .online {
-            color: green;
-            font-weight: bold;
-        }
-
-        .offline {
-            color: grey;
-            font-weight: normal;
         }
 
         button {
@@ -111,6 +109,11 @@
             font-weight: bold;
             margin-bottom: 10px;
         }
+
+        .status {
+            font-size: 12px;
+            color: grey;
+        }
     </style>
 </head>
 <body>
@@ -124,22 +127,15 @@
     </div>
 
     <div class="chat-container">
-
         <!-- Panel Izquierdo (Lista de amigos) -->
         <div class="left-panel">
             <h3>Tus amigos</h3>
             {% if friends %}
                 <ul id="friend-list">
                     {% for friend in friends %}
-                        <li onclick="openChat('{{ friend.username }}')" id="friend-{{ friend.username }}">
-                            {{ friend.username }}
-                            <span id="status-{{ friend.username }}" class="status-indicator">
-                                {% if friend.profile.is_online %}
-                                    <span class="online">En línea</span>
-                                {% else %}
-                                    <span class="offline">Desconectado</span>
-                                {% endif %}
-                            </span>
+                        <li class="friend-item" data-username="{{ friend.username }}" id="friend-{{ friend.username }}">
+                            <button>{{ friend.username }}</button>
+                            <span class="status" id="status-{{ friend.username }}">Desconectado</span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -168,12 +164,12 @@
 
             <div class="user-list">
                 <h4>Enviar solicitud de amistad</h4>
-                <ul>
+                <ul id="user-list">
                     {% if users %}
                         {% for user in users %}
-                            <li>
+                            <li id="user-{{ user.id }}">
                                 {{ user.username }}
-                                <form method="post" action="{% url 'send_friend_request' user.id %}">
+                                <form method="post" action="{% url 'send_friend_request' user.id %}" class="send-request-form" data-user-id="{{ user.id }}">
                                     {% csrf_token %}
                                     <button type="submit">Enviar solicitud</button>
                                 </form>
@@ -188,11 +184,7 @@
 
         <!-- Panel Derecho (Chat con el amigo seleccionado) -->
         <div class="right-panel">
-            <!-- Aquí se mostrará el nombre del amigo seleccionado -->
-            <div class="chat-header" id="chat-header">
-                Elige un amigo para comenzar a chatear
-            </div>
-
+            <div class="chat-header" id="chat-header">Elige un amigo para comenzar a chatear</div>
             <div id="chat-log"></div>
             <input id="chat-message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off" disabled>
             <button id="chat-message-submit" disabled>Enviar</button>
@@ -203,44 +195,43 @@
         let chatSocket = null;
 
         function openChat(friendUsername) {
-            // Actualizar el encabezado con el nombre del amigo seleccionado
             document.getElementById('chat-header').innerText = `Chateando con ${friendUsername}`;
 
-            // Cerrar el socket anterior si existe
             if (chatSocket) {
                 chatSocket.close();
             }
 
-            // Remover clase seleccionada de los demás amigos
             const friends = document.querySelectorAll('.friend-list li');
             friends.forEach(friend => friend.classList.remove('selected'));
 
-            // Agregar clase seleccionada al amigo clicado
             const selectedFriend = document.getElementById(`friend-${friendUsername}`);
             selectedFriend.classList.add('selected');
 
-            // Determina si se debe usar ws o wss según el protocolo
             const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             chatSocket = new WebSocket(`${protocol}${window.location.host}/ws/chat/${friendUsername}/`);
 
             chatSocket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
-                const chatLog = document.querySelector('#chat-log');
-                chatLog.innerHTML += `<p><strong>${data.sender}:</strong> ${data.message}</p>`;
-                chatLog.scrollTop = chatLog.scrollHeight;
+
+                if (data.message) {
+                    const chatLog = document.querySelector('#chat-log');
+                    chatLog.innerHTML += `<p><strong>${data.sender}:</strong> ${data.message}</p>`;
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                } else if (data.status && data.username) {
+                    const statusElement = document.getElementById(`status-${data.username}`);
+                    statusElement.innerText = data.status === 'online' ? 'En línea' : 'Desconectado';
+                }
             };
 
             chatSocket.onclose = function(e) {
                 console.error('Chat cerrado inesperadamente');
             };
 
-            // Habilitar el input y botón de enviar al seleccionar un amigo
             const input = document.querySelector('#chat-message-input');
             const submitButton = document.querySelector('#chat-message-submit');
             input.disabled = false;
             submitButton.disabled = false;
 
-            // Enviar mensaje al hacer clic en el botón de enviar
             document.querySelector('#chat-message-submit').onclick = function(e) {
                 const message = input.value;
                 if (message.trim()) {
@@ -253,19 +244,29 @@
             };
         }
 
-        // Recibir y actualizar estado en línea/desconectado
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
+        document.querySelectorAll('.send-request-form').forEach(form => {
+            form.onsubmit = function(event) {
+                event.preventDefault();
+                const userId = this.dataset.userId;
 
-            if (data.status && data.friend) {
-                const statusElement = document.getElementById(`status-${data.friend}`);
-                if (data.status === "online") {
-                    statusElement.innerHTML = "<span class='online'>En línea</span>";
-                } else if (data.status === "offline") {
-                    statusElement.innerHTML = "<span class='offline'>Desconectado</span>";
+                if (confirm("¿Estás seguro de que quieres enviar la solicitud de amistad?")) {
+                    fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert("Solicitud de amistad enviada");
+                            document.getElementById(`user-${userId}`).remove();
+                        } else {
+                            alert("Hubo un problema al enviar la solicitud. Inténtalo de nuevo.");
+                        }
+                    });
                 }
-            }
-        };
+            };
+        });
     </script>
 </body>
 </html>
