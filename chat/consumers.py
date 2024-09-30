@@ -17,7 +17,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
-            # Notificar a los otros usuarios que el usuario está en línea
+            # Notificar que el usuario está en línea en todos los grupos
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -36,7 +36,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        # Notificar a los otros usuarios que el usuario está desconectado
+        # Notificar que el usuario está desconectado en todos los grupos
         await self.channel_layer.group_send(
             self.room_group_name,
             {
