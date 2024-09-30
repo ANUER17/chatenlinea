@@ -2,6 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 from .models import Message
+from asgiref.sync import sync_to_async
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -17,6 +18,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
+            # Notificar que el usuario está en línea
+            await self.notify_status(self.scope['user'].username, True)
+
             await self.accept()  # Aceptar la conexión WebSocket
 
     async def disconnect(self, close_code):
@@ -25,6 +29,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+
+        # Notificar que el usuario está desconectado
+        await self.notify_status(self.scope['user'].username, False)
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -36,13 +43,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return  # No enviar mensajes vacíos
 
         try:
-            recipient = User.objects.get(username=recipient_username)
+            recipient = await sync_to_async(User.objects.get)(username=recipient_username)
         except User.DoesNotExist:
             return  # Si no se encuentra el receptor, no hacer nada
 
         # Guardar el mensaje en la base de datos
         try:
-            Message.objects.create(
+            await sync_to_async(Message.objects.create)(
                 sender=sender,
                 recipient=recipient,
                 content=message,
@@ -71,4 +78,27 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': message,
             'sender': sender  # Incluir el remitente en el WebSocket
+        }))
+
+    async def notify_status(self, username, online):
+        """Notifica el estado de conexión del usuario."""
+        status_message = f"{username} {'está en línea' if online else 'se ha desconectado'}"
+
+        # Enviar el estado de conexión a los miembros de la sala
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'status_message',
+                'message': status_message
+            }
+        )
+
+    async def status_message(self, event):
+        """Envía el estado de conexión a los clientes conectados."""
+        message = event['message']
+
+        # Enviar el mensaje de estado de conexión a los clientes WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'sender': 'Sistema'
         }))
