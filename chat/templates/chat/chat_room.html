@@ -122,7 +122,7 @@
                 <ul id="friend-list">
                     {% for friend in friends %}
                         <li onclick="openChat('{{ friend.username }}')" id="friend-{{ friend.username }}">
-                            {{ friend.username }}
+                            <button>{{ friend.username }}</button>
                             <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
                             {% for message in unread_messages %}
                                 {% if message.sender == friend %}
