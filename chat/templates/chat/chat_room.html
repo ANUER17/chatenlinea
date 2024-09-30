@@ -86,6 +86,12 @@
         .request-list, .user-list {
             margin-top: 20px;
         }
+
+        .chat-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -118,7 +124,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p>Selecciona un amigo para chatear</p>
+                <p>No tienes amigos agregados aún.</p>
             {% endif %}
 
             <div class="request-list">
@@ -162,19 +168,32 @@
 
         <!-- Panel Derecho (Chat con el amigo seleccionado) -->
         <div class="right-panel">
-            <div id="chat-log">
-                <h3>Elige un amigo para comenzar a chatear</h3>
+            <!-- Aquí se mostrará el nombre del amigo seleccionado -->
+            <div class="chat-header" id="chat-header">
+                Elige un amigo para comenzar a chatear
             </div>
 
+            <div id="chat-log"></div>
             <input id="chat-message-input" type="text" placeholder="Escribe tu mensaje..." autocomplete="off" disabled>
             <button id="chat-message-submit" disabled>Enviar</button>
         </div>
     </div>
 
     <script>
+        let chatSocket = null;
+
         function openChat(friendUsername) {
+            // Actualizar el encabezado con el nombre del amigo seleccionado
+            document.getElementById('chat-header').innerText = `Chateando con ${friendUsername}`;
+
+            // Cerrar el socket anterior si existe
+            if (chatSocket) {
+                chatSocket.close();
+            }
+
+            // Determina si se debe usar ws o wss según el protocolo
             const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            const chatSocket = new WebSocket(`${protocol}${window.location.host}/ws/chat/${friendUsername}/`);
+            chatSocket = new WebSocket(`${protocol}${window.location.host}/ws/chat/${friendUsername}/`);
 
             chatSocket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
@@ -187,13 +206,13 @@
                 console.error('Chat cerrado inesperadamente');
             };
 
+            // Habilitar el input y botón de enviar al seleccionar un amigo
             const input = document.querySelector('#chat-message-input');
             const submitButton = document.querySelector('#chat-message-submit');
-
-            // Habilitar el input y botón de enviar al seleccionar un amigo
             input.disabled = false;
             submitButton.disabled = false;
 
+            // Enviar mensaje al hacer clic en el botón de enviar
             document.querySelector('#chat-message-submit').onclick = function(e) {
                 const message = input.value;
                 if (message.trim()) {
