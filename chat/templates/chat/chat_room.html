@@ -69,11 +69,11 @@
         }
 
         .friend-list li.online {
-            background-color: #d4edda; /* Verde suave para amigos en línea */
+            background-color: #d4edda; /* Verde para amigos en línea */
         }
 
         .friend-list li.offline {
-            background-color: #f8d7da; /* Rojo suave para amigos desconectados */
+            background-color: #f8d7da; /* Rojo para amigos desconectados */
         }
 
         .friend-list li.selected {
@@ -134,7 +134,7 @@
                 <ul id="friend-list">
                     {% for friend in friends %}
                         <li class="friend-item" data-username="{{ friend.username }}" id="friend-{{ friend.username }}">
-                            <button>{{ friend.username }}</button>
+                            <button onclick="openChat('{{ friend.username }}')">{{ friend.username }}</button>
                             <span class="status" id="status-{{ friend.username }}">Desconectado</span>
                         </li>
                     {% endfor %}
