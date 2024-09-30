@@ -157,12 +157,12 @@
 
             <div class="user-list">
                 <h4>Enviar solicitud de amistad</h4>
-                <ul>
+                <ul id="user-list">
                     {% if users %}
                         {% for user in users %}
-                            <li>
+                            <li id="user-{{ user.id }}">
                                 {{ user.username }}
-                                <form method="post" action="{% url 'send_friend_request' user.id %}">
+                                <form method="post" action="{% url 'send_friend_request' user.id %}" class="send-request-form" data-user-id="{{ user.id }}">
                                     {% csrf_token %}
                                     <button type="submit">Enviar solicitud</button>
                                 </form>
@@ -241,6 +241,35 @@
                 }
             };
         }
+
+        // Manejo de la confirmación y eliminación de la solicitud de amistad
+        document.querySelectorAll('.send-request-form').forEach(form => {
+            form.onsubmit = function(event) {
+                event.preventDefault();
+                const userId = this.dataset.userId;
+
+                // Confirmar que la solicitud fue enviada
+                if (confirm("¿Estás seguro de que quieres enviar la solicitud de amistad?")) {
+                    fetch(this.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+                        },
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Confirmar que la solicitud fue enviada
+                            alert("Solicitud de amistad enviada");
+
+                            // Eliminar el usuario de la lista de enviar solicitudes
+                            document.getElementById(`user-${userId}`).remove();
+                        } else {
+                            alert("Hubo un problema al enviar la solicitud. Inténtalo de nuevo.");
+                        }
+                    });
+                }
+            };
+        });
     </script>
 </body>
 </html>
