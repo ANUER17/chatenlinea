@@ -79,6 +79,16 @@
             color: red;
         }
 
+        .online {
+            color: green;
+            font-weight: bold;
+        }
+
+        .offline {
+            color: grey;
+            font-weight: normal;
+        }
+
         button {
             padding: 10px;
             background-color: #4CAF50;
@@ -122,13 +132,14 @@
                 <ul id="friend-list">
                     {% for friend in friends %}
                         <li onclick="openChat('{{ friend.username }}')" id="friend-{{ friend.username }}">
-                            <button>{{ friend.username }}</button>
-                            <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
-                            {% for message in unread_messages %}
-                                {% if message.sender == friend %}
-                                    <span class="unread-message">¡Nuevo mensaje!</span>
+                            {{ friend.username }}
+                            <span id="status-{{ friend.username }}" class="status-indicator">
+                                {% if friend.profile.is_online %}
+                                    <span class="online">En línea</span>
+                                {% else %}
+                                    <span class="offline">Desconectado</span>
                                 {% endif %}
-                            {% endfor %}
+                            </span>
                         </li>
                     {% endfor %}
                 </ul>
@@ -157,12 +168,12 @@
 
             <div class="user-list">
                 <h4>Enviar solicitud de amistad</h4>
-                <ul id="user-list">
+                <ul>
                     {% if users %}
                         {% for user in users %}
-                            <li id="user-{{ user.id }}">
+                            <li>
                                 {{ user.username }}
-                                <form method="post" action="{% url 'send_friend_request' user.id %}" class="send-request-form" data-user-id="{{ user.id }}">
+                                <form method="post" action="{% url 'send_friend_request' user.id %}">
                                     {% csrf_token %}
                                     <button type="submit">Enviar solicitud</button>
                                 </form>
@@ -242,34 +253,19 @@
             };
         }
 
-        // Manejo de la confirmación y eliminación de la solicitud de amistad
-        document.querySelectorAll('.send-request-form').forEach(form => {
-            form.onsubmit = function(event) {
-                event.preventDefault();
-                const userId = this.dataset.userId;
+        // Recibir y actualizar estado en línea/desconectado
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
 
-                // Confirmar que la solicitud fue enviada
-                if (confirm("¿Estás seguro de que quieres enviar la solicitud de amistad?")) {
-                    fetch(this.action, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
-                        },
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            // Confirmar que la solicitud fue enviada
-                            alert("Solicitud de amistad enviada");
-
-                            // Eliminar el usuario de la lista de enviar solicitudes
-                            document.getElementById(`user-${userId}`).remove();
-                        } else {
-                            alert("Hubo un problema al enviar la solicitud. Inténtalo de nuevo.");
-                        }
-                    });
+            if (data.status && data.friend) {
+                const statusElement = document.getElementById(`status-${data.friend}`);
+                if (data.status === "online") {
+                    statusElement.innerHTML = "<span class='online'>En línea</span>";
+                } else if (data.status === "offline") {
+                    statusElement.innerHTML = "<span class='offline'>Desconectado</span>";
                 }
-            };
-        });
+            }
+        };
     </script>
 </body>
 </html>
