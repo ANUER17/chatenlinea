@@ -64,22 +64,24 @@ button:hover {
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #fff;
-    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
 }
 
 .friend-list li:hover {
     background-color: #e6e6e6;
 }
 
-.friend-list li.selected {
-    background-color: #4CAF50;
-    color: white;
-    font-weight: bold;
-}
-
 .unread-message {
     font-weight: bold;
     color: red;
+}
+
+.online {
+    color: green;
+    font-weight: bold;
+}
+
+.offline {
+    color: grey;
+    font-weight: normal;
 }
