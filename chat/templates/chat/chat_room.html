@@ -58,11 +58,20 @@
             padding: 10px;
             border: 1px solid #ccc;
             background: #fff;
+            border-radius: 5px;
             cursor: pointer;
+            text-align: center;
+            transition: background-color 0.3s;
         }
 
         .friend-list li:hover {
             background-color: #e6e6e6;
+        }
+
+        .friend-list li.selected {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
         }
 
         .unread-message {
@@ -110,9 +119,9 @@
         <div class="left-panel">
             <h3>Tus amigos</h3>
             {% if friends %}
-                <ul>
+                <ul id="friend-list">
                     {% for friend in friends %}
-                        <li onclick="openChat('{{ friend.username }}')">
+                        <li onclick="openChat('{{ friend.username }}')" id="friend-{{ friend.username }}">
                             {{ friend.username }}
                             <!-- Si el amigo tiene mensajes no leídos, mostrar notificación -->
                             {% for message in unread_messages %}
@@ -190,6 +199,14 @@
             if (chatSocket) {
                 chatSocket.close();
             }
+
+            // Remover clase seleccionada de los demás amigos
+            const friends = document.querySelectorAll('.friend-list li');
+            friends.forEach(friend => friend.classList.remove('selected'));
+
+            // Agregar clase seleccionada al amigo clicado
+            const selectedFriend = document.getElementById(`friend-${friendUsername}`);
+            selectedFriend.classList.add('selected');
 
             // Determina si se debe usar ws o wss según el protocolo
             const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
